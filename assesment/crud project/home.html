@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            loadUsers();
+            $('#userForm').submit(function(e) {
+                e.preventDefault();
+                $.post('index.php', $(this).serialize(), function(response) {
+                    if (response.status === 'success') {
+                        $('#userForm')[0].reset();
+                        $('input[name="action"]').val('create');
+                        $('input[type="submit"]').val('Add User');
+                        loadUsers();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                }, 'json');
+            });
+
+            $(document).on('click', '.edit', function() {
+                var row = $(this).closest('tr');
+                $('#id').val(row.find('td:eq(0)').text());
+                $('#name').val(row.find('td:eq(1)').text());
+                $('#email').val(row.find('td:eq(2)').text());
+                $('#phone').val(row.find('td:eq(3)').text());
+                $('input[name="action"]').val('update');
+                $('input[type="submit"]').val('Update User');
+            });
+
+            $(document).on('click', '.delete', function() {
+                if (confirm('Are you sure?')) {
+                    $.post('index.php', { action: 'delete', id: $(this).data('id') }, loadUsers, 'json');
+                }
+            });
+        });
+
+        function loadUsers() {
+            $.post('index.php', { action: 'read' }, function(users) {
+                var tbody = '';
+                for (var i = 0; i < users.length; i++) {
+                    tbody += '<tr><td>' + users[i].id + '</td><td>' + users[i].name + '</td><td>' + users[i].email + '</td><td>' + users[i].phone + '</td><td>' +
+                             '<button class="edit">Edit</button> ' +
+                             '<button class="delete" data-id="' + users[i].id + '">Delete</button></td></tr>';
+                }
+                $('#userTable tbody').html(tbody);
+            }, 'json');
+        }
+    </script>
+</head>
+<body>
+    <h2>User Management</h2>
+    <form id="userForm">
+        <input type="hidden" id="id" name="id">
+        <input type="hidden" name="action" value="create">
+        Name: <input type="text" id="name" name="name" required><br>
+        Email: <input type="email" id="email" name="email" required><br>
+        Phone: <input type="text" id="phone" name="phone" required><br>
+        <input type="submit" value="Add User">
+    </form>
+
+    <h2>Users List</h2>
+    <table id="userTable" border="1">
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead>
+        <tbody></tbody>
+    </table>
+</body>
+</html>
